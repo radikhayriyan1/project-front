@@ -201,7 +201,7 @@
                 createSelectField(elem);
             }
         })
-        $(editId).attr('onclick', `saveAccount(${id}, ${currentPageSize}, ${currentPageNumber})`);
+        $(editId).attr('onclick', `saveAccount(${id})`);
     }
     function saveAccount(id) {
         const rowId = `#row${id}`;
