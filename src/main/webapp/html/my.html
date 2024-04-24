@@ -140,8 +140,8 @@
                     $('<td>').text(account.level).appendTo(row);
                     $('<td>').text(new Date(account.birthday).toLocaleDateString()).appendTo(row);
                     $('<td>').text(account.banned).attr('id', 'banned').appendTo(row);
-                    $('<td>').html(`<button id="edit${account.id}" class="action-button" onclick="editAccount(${account.id}, ${pageSize}, ${pageNumber})"><img src="/img/edit.png"></button>`).appendTo(row);
-                    $('<td>').html(`<button id="delete${account.id}" class="action-button" onclick="deleteAccount(${account.id}, ${pageSize}, ${pageNumber})"><img src="/img/delete.png"></button>`).appendTo(row);
+                    $('<td>').html(`<button id="edit${account.id}" class="action-button" onclick="editAccount(${account.id})"><img src="/img/edit.png"></button>`).appendTo(row);
+                    $('<td>').html(`<button id="delete${account.id}" class="action-button" onclick="deleteAccount(${account.id})"><img src="/img/delete.png"></button>`).appendTo(row);
                     row.appendTo($('#table tbody'));
                     setPagination();
                 });
