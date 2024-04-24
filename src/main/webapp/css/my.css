@@ -1,0 +1,21 @@
+body {
+    padding: 50px;
+}
+
+.col-sm-custom {
+    flex: 0 0 auto;
+    width: 10%;
+}
+
+td, th {
+    text-align: center;
+}
+
+.action-button {
+    border: none;
+    padding: 0;
+}
+
+img {
+    width: 20px;
+}

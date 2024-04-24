@@ -1,11 +1,309 @@
 <html>
 <head>
     <title>RPG</title>
-    <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link href="/css/my.css" rel="stylesheet">
 </head>
-<body>
-<h1>RPG admin panel</h1>
+<body onload="loadAccounts()">
+<h1 class="mb-5">RPG admin panel</h1>
+<h5 class="mb-3">Accounts List:</h5>
+<div class="mb-3 row">
+    <label for="page-count" class="col-sm-custom col-form-label">Count per page:</label>
+    <div class="col-sm-1">
+        <select class="form-select" id="page-count" onchange="loadAccounts(event.target.value)">
+            <option selected value="3">3</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+        </select>
+    </div>
+    <button type="button" class="btn btn-primary col-sm-2" data-bs-toggle="modal" data-bs-target="#createAccountModal">
+        Create Account
+    </button>
 
+    <!-- Modal -->
+    <div class="modal fade" id="createAccountModal" data-bs-backdrop="static">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Create Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="close-modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form class="needs-validation" id="form" novalidate>
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <label for="nameId" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="nameId" maxlength="12" minlength="1" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="titleId" class="form-label">Title</label>
+                                <input type="text" class="form-control" id="titleId" maxlength="30" minlength="1" required>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <label for="raceId" class="form-label">Race</label>
+                                <select class="form-select" id="raceId">
+                                    <option selected value='HUMAN'>HUMAN</option>
+                                    <option value='DWARF'>DWARF</option>
+                                    <option value='ELF'>ELF</option>
+                                    <option value='GIANT'>GIANT</option>
+                                    <option value='ORC'>ORC</option>
+                                    <option value='TROLL'>TROLL</option>
+                                    <option value='HOBBIT'>HOBBIT</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="professionId" class="form-label">Profession</label>
+                                <select class="form-select" id="professionId">
+                                    <option selected value='WARRIOR'>WARRIOR</option>
+                                    <option value='ROGUE'>ROGUE</option>
+                                    <option value='SORCERER'>SORCERER</option>
+                                    <option value='CLERIC'>CLERIC</option>
+                                    <option value='PALADIN'>PALADIN</option>
+                                    <option value='NAZGUL'>NAZGUL</option>
+                                    <option value='WARLOCK'>WARLOCK</option>
+                                    <option value='DRUID'>DRUID</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <label for="levelId" class="form-label">Level</label>
+                                <input type="number" class="form-control" id="levelId" min="0" max="100" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="birthdayId" class="form-label">Birthday</label>
+                                <input id="birthdayId" class="form-control" type="date" required>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <label for="bannedId" class="form-label">Banned</label>
+                            <select class="form-select" id="bannedId">
+                                <option selected value='true'>true</option>
+                                <option value='false'>false</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="createAccount()">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<table class="table table-bordered border-primary" id="table">
+    <thead>
+    <tr>
+        <th scope="col">#</th>
+        <th scope="col">Name</th>
+        <th scope="col">Title</th>
+        <th scope="col">Race</th>
+        <th scope="col">Profession</th>
+        <th scope="col">Level</th>
+        <th scope="col">Birthday</th>
+        <th scope="col">Banned</th>
+        <th scope="col">Edit</th>
+        <th scope="col">Delete</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<nav>
+    <ul class="pagination pagination-sm" id="pagination"></ul>
+</nav>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<script>
+    let currentPageSize = 3;
+    let currentPageNumber = 0;
+    function loadAccounts(pageSize = 3, pageNumber = 0) {
+        currentPageSize = pageSize;
+        currentPageNumber = pageNumber;
+        const url = `/rest/players?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+        $.ajax({
+            url,
+            type: 'GET',
+            success: (accounts) => {
+                $('#table tbody').empty();
+                accounts.forEach((account) => {
+                    const row = $('<tr>');
+                    row.attr('id', `row${account.id}`);
+                    $('<td>').text(account.id).appendTo(row);
+                    $('<td>').text(account.name).attr('id', 'name').appendTo(row);
+                    $('<td>').text(account.title).attr('id', 'title').appendTo(row);
+                    $('<td>').text(account.race).attr('id', 'race').appendTo(row);
+                    $('<td>').text(account.profession).attr('id', 'profession').appendTo(row);
+                    $('<td>').text(account.level).appendTo(row);
+                    $('<td>').text(new Date(account.birthday).toLocaleDateString()).appendTo(row);
+                    $('<td>').text(account.banned).attr('id', 'banned').appendTo(row);
+                    $('<td>').html(`<button id="edit${account.id}" class="action-button" onclick="editAccount(${account.id}, ${pageSize}, ${pageNumber})"><img src="/img/edit.png"></button>`).appendTo(row);
+                    $('<td>').html(`<button id="delete${account.id}" class="action-button" onclick="deleteAccount(${account.id}, ${pageSize}, ${pageNumber})"><img src="/img/delete.png"></button>`).appendTo(row);
+                    row.appendTo($('#table tbody'));
+                    setPagination();
+                });
+            },
+            error: (xhr, status, error) => {
+                console.error('Something went wrong:', status, error);
+            }
+        });
+    }
+    async function setPagination() {
+        const totalCount = await getTotalCount();
+        let pages = Math.ceil(totalCount/currentPageSize);
+
+        $("#pagination").empty();
+
+        for (let i = 0; i < pages; i++) {
+            const page = `<li onclick="loadAccounts(${currentPageSize}, ${i})" class="page-item ${currentPageNumber === i ? 'active' : ''}" aria-current="page">
+            <span class="page-link">${i + 1}</span></li>`
+            $("#pagination").append(page);
+        }
+    }
+    async function getTotalCount() {
+        let totalCount;
+        await $.ajax({
+            url: '/rest/players/count',
+            type: 'GET',
+            success: (count) => totalCount = count,
+            error: (xhr, status, error) => {
+                console.error('Something went wrong:', status, error);
+            }
+        });
+        return totalCount;
+    }
+    function deleteAccount(id) {
+        const url = "/rest/players/" + id;
+        $.ajax({
+            url: url,
+            type: "DELETE",
+            success: () => loadAccounts(currentPageSize, currentPageNumber),
+            error: (xhr, status, error) => {
+                console.error('Something went wrong:', status, error);
+            }
+        });
+    }
+    function editAccount(id) {
+        const editId = `#edit${id}`;
+        const deleteId = `#delete${id}`;
+        const rowId = `#row${id}`;
+        $(deleteId).remove();
+        $(editId).html("<img src='/img/save.png'>");
+
+        $(rowId).children().toArray().forEach(elem => {
+            const id = elem.id;
+            if (id === 'name' || id === 'title') {
+                this.createInputField(elem);
+            } else if (id === 'race' || id === 'profession' || id === 'banned') {
+                createSelectField(elem);
+            }
+        })
+        $(editId).attr('onclick', `saveAccount(${id}, ${currentPageSize}, ${currentPageNumber})`);
+    }
+    function saveAccount(id) {
+        const rowId = `#row${id}`;
+        const body = {};
+        $(rowId).children().toArray().forEach(elem => {
+            const id = elem.id;
+            switch(id) {
+                case 'name':
+                    body.name = elem.firstChild.value;
+                    break;
+                case 'title':
+                    body.title = elem.firstChild.value;
+                    break;
+                case 'race':
+                    body.race = elem.firstChild.value;
+                    break;
+                case 'profession':
+                    body.profession = elem.firstChild.value;
+                    break;
+                case 'banned':
+                    body.banned = elem.firstChild.value;
+                    break;
+            }
+        });
+
+        $.ajax({
+            url: `/rest/players/${id}`,
+            type:'POST',
+            dataType: 'json',
+            contentType: 'application/json;charset=UTF-8',
+            async: false,
+            data: JSON.stringify(body),
+            success: () => loadAccounts(currentPageSize, currentPageNumber),
+            error: (xhr, status, error) => {
+                console.error('Something went wrong:', status, error);
+            }
+        });
+    }
+    function createAccount() {
+        const form = $('#form');
+        const clearForm = () => {
+            $("#nameId").val("");
+            $("#titleId").val("");
+            $("#raceId").val("HUMAN");
+            $("#professionId").val("WARRIOR");
+            $("#levelId").val("");
+            $("#birthdayId").val("");
+            $("#bannedId").val("true");
+            form.removeClass('was-validated');
+        }
+        form.attr('class', 'was-validated');
+        if (!form.get(0).checkValidity()) {
+            return;
+        }
+        const body = {
+            name: $("#nameId").val(),
+            title: $("#titleId").val(),
+            race: $("#raceId").val(),
+            profession: $("#professionId").val(),
+            level: $("#levelId").val(),
+            birthday: new Date($("#birthdayId").val()).getTime(),
+            banned: $("#bannedId").val(),
+        }
+        $.ajax({
+            url: "/rest/players",
+            type:'POST',
+            dataType: 'json',
+            contentType: 'application/json;charset=UTF-8',
+            async: false,
+            data: JSON.stringify(body),
+            success: () => {
+                loadAccounts(currentPageSize, currentPageNumber);
+                $("#close-modal").click();
+                clearForm();
+            },
+            error: (xhr, status, error) => {
+                console.error('Something went wrong:', status, error);
+            }
+        });
+    }
+    function getDropdownOptions(field = 'race') {
+        switch(field) {
+            case 'race':
+                return ['HUMAN', 'DWARF', 'ELF', 'GIANT', 'ORC', 'TROLL', 'HOBBIT'];
+            case 'profession':
+                return ['WARRIOR', 'ROGUE', 'SORCERER', 'CLERIC', 'PALADIN', 'NAZGUL', 'WARLOCK', 'DRUID'];
+            default:
+                return ['true', 'false'];
+        }
+    }
+    function createInputField(elem) {
+        elem.innerHTML = `<input class="form-control form-control-sm" value="${elem.innerHTML}">`;
+    }
+    function createSelectField(elem) {
+        const defaultOption = elem.innerHTML;
+        let options = '';
+        getDropdownOptions(elem.id).filter(option => option !== defaultOption).forEach(option => {
+            options += `<option value="${option}">${option}</option>`
+        });
+        elem.innerHTML = `<select class="form-select form-select-sm">
+            <option selected value="${elem.innerHTML}">${defaultOption}</option>${options}</select>`;
+    }
+</script>
 </body>
 </html>
